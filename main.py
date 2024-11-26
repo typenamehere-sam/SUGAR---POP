@@ -35,6 +35,7 @@ class Game:
         self.space.gravity = (0, -9)  # Gravity pointing downwards in Pymunk's coordinate system
         # Iterations defaults to 10. Higher is more accurate collison detection
         self.space.iterations = 30 
+        self.is_paused = False
 
         self.drawing_lines = []
         self.sugar_grains = []
@@ -116,6 +117,10 @@ class Game:
 
     def update(self):
         '''Update the program physics'''
+        
+        if self.is_paused:
+            return
+        
         # Keep an overall iterator
         self.iter += 1
         
@@ -226,6 +231,21 @@ class Game:
             if event.type == EXIT_APP or event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
                 pg.quit()
                 sys.exit()
+
+            # Implementing level restart
+            elif event.type == pg.KEYDOWN and event.key == pg.K_r:
+                self.current_level -= 1
+                pg.time.set_timer(LOAD_NEW_LEVEL, 100)  # Load level
+
+            
+            # Implementing a pause
+            elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                if self.is_paused:
+                    self.is_paused = False        
+                else:
+                    self.message_display.show_message("Paused", 2)  # Show Paused
+                    self.is_paused = True
+                
             elif event.type == pg.MOUSEBUTTONDOWN:
                 self.mouse_down = True
                 # Get mouse position and start a new dynamic line
