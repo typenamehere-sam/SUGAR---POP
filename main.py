@@ -19,6 +19,7 @@ import bucket
 import level
 import message_display
 
+
 class Game:
     def __init__(self) -> None:
         pg.init()
@@ -86,6 +87,7 @@ class Game:
             # Load buckets
             for nb in self.level.data['buckets']:
                 self.buckets.append(bucket.Bucket(self.space, nb['x'], nb['y'], nb['width'], nb['height'], nb['needed_sugar']))
+                
             # Load static items
             for nb in self.level.data['statics']:
                 self.statics.append(static_item.StaticItem(self.space, nb['x1'], nb['y1'], nb['x2'], nb['y2'], nb['color'], nb['line_width'], nb['friction'], nb['restitution']))
