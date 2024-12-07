@@ -1,8 +1,8 @@
 #############################################################
 # Module Name: Sugar Pop Main Module
 # Project: Sugar Pop Program
-# Date: Nov 17, 2024
-# By: Brett W. Huffman
+# Date: Dec 3, 2024
+# By: samwel O obiero
 # Description: The main implementation of the sugar pop game
 #############################################################
 
@@ -18,6 +18,8 @@ import sugar_grain
 import bucket
 import level
 import message_display
+from pathlib import Path
+from sounds import Sound
 
 
 class Game:
@@ -36,8 +38,9 @@ class Game:
         self.space = pymunk.Space()
         self.space.gravity = (0, -9)  # Gravity pointing downwards in Pymunk's coordinate system
         # Iterations defaults to 10. Higher is more accurate collison detection
-        self.space.iterations = 30 
+        self.space.iterations = 40 
         self.is_paused = False
+        self.gravity_reversed = False
 
         self.drawing_lines = []
         self.sugar_grains = []
@@ -49,6 +52,12 @@ class Game:
         self.mouse_down = False
         self.current_line = None
         self.message_display = message_display.MessageDisplay(font_size=72)
+
+        #initializing sound manager
+        pg.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=512)
+        self.sound = Sound()
+        self.sound.channel1.play( pg.mixer.Sound ('./sounds/Game_background.mp3'))
+        self.sound_playing = False
         
         # Load the intro image
         self.intro_image = pg.image.load("./images/SugarPop.png").convert()  # Load the intro image
@@ -56,7 +65,7 @@ class Game:
         scale_height = self.intro_image.get_height() * WIDTH / self.intro_image.get_width()
         self.intro_image = pg.transform.scale(self.intro_image, (WIDTH, int(scale_height)))  # Scale to screen resolution
         
-        pg.time.set_timer(LOAD_NEW_LEVEL, 2000)  # Load in 2 seconds
+        pg.time.set_timer(LOAD_NEW_LEVEL, 5000)  # Load in 5 seconds
 
     def load_level(self, levelnumber=0):
         # Destroy any current game objects
@@ -75,6 +84,11 @@ class Game:
  
         new_level = LEVEL_FILE_NAME.replace("X", str(levelnumber))
         self.level = level.Level(new_level)
+
+        #play background sound for loaded level
+        pg.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=512)
+        self.sound = Sound()
+        self.sound.channel1.play( pg.mixer.Sound ('./sounds/Game_bgd.mp3'))
         
         # Make sure the file was found
         if not self.level or not self.level.data:
@@ -96,6 +110,7 @@ class Game:
             self.message_display.show_message("Level Up", 10)
             self.level_complete = False
             return True
+        
 
     def build_main_walls(self):
         '''Build the walls, ceiling, and floor of the screen'''
@@ -148,21 +163,52 @@ class Game:
             self.message_display.update()
             
             # Calculate buckets count by counting each grain's position
-            # First, explode or reset the counter on each bucket
+          #loop through the buckets and check if sugar is entering
             for bucket in self.buckets:
+           
+
+                    #check if the bucket has exploded after attaining the required amount of sugar
                 if bucket.count >= bucket.needed_sugar:
                     bucket.explode(self.sugar_grains)
+                    #play sound for explosion
+                    if hasattr (self, 'sound'):
+                        self.sound.play ('Game_over')
+
+                    if not self.level_complete and self.check_all_buckets_exploded():
+                        self.level_complete =True
+                        self.message_display.show_message("level complete!", 2)
+                        pg.time.set_timer(LOAD_NEW_LEVEL, 2000)
+                else:
+                    bucket.count_reset()
+# count the grains in unexploded buckets
+            for grain in self.sugar_grains:
+                for bucket in self.buckets:
+                    bucket.collect(grain)
+
+                    
                     # If all the buckets are gone, level up!
                     if not self.level_complete and self.check_all_buckets_exploded():
                         self.level_complete = True
                         self.message_display.show_message("Level Complete!", 2)
+
+                        #lets play the sound
+                        if hasattr (self, 'sound'):
+                            self.sound.play ('Level_complete')
+
+                        # stop the current background sound
+                        if hasattr(self.sound, 'channel1'):
+                            self.sound.channel1.stop()
                         pg.time.set_timer(LOAD_NEW_LEVEL, 2000)  # Schedule next level load
                 else:
                     bucket.count_reset()
             # Count the grains in the un-exploded buckets
             for grain in self.sugar_grains:
                 for bucket in self.buckets:
-                    bucket.collect(grain)
+                    #has sugar entered the bucket?
+                    if bucket.collect(grain):
+                        #play the sound
+                        if hasattr (self, 'sound'):
+                            self.sound.play ('bucket1')
                 
             # Drop sugar if needed
             if self.level_grain_dropping:
@@ -181,10 +227,12 @@ class Game:
             # Draw the text surface on the screen
             self.screen.blit(text_surface, (10, 10))  # Position at top-left corner
 
+
+
     def draw(self):
         '''Draw the overall game. Should call individual item draw() methods'''
         # Clear the screen
-        self.screen.fill('black')
+        self.screen.fill('darkgreen')
 
         # Only show the intro screen if we haven't loaded a level yet
         if self.intro_image:
@@ -225,8 +273,21 @@ class Game:
         # Show any messages needed        
         self.message_display.draw(self.screen)
 
+        #gravity reverse message
+        if self.gravity_reversed:
+            #prepare surface
+            gravity_text = self.font.render("Gravity reversed", True, (255,0,0))
+            #draw text on screen
+            text_rect = gravity_text.get_rect (center=(WIDTH // 2, 50))
+            self.screen.blit(gravity_text,text_rect)
+
         # Update the display
         pg.display.update()
+
+    def reverse_gravity (self):
+        x,y  = self.space.gravity
+        self.space.gravity = (x, -y)
+        self.gravity_reversed = not self.gravity_reversed
 
     def check_events(self):
         '''Check for keyboard and mouse events'''
@@ -244,10 +305,18 @@ class Game:
             # Implementing a pause
             elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 if self.is_paused:
-                    self.is_paused = False        
+                    #when unpausing the game
+                    self.is_paused = False  
+                    self.sound.channel1.unpause()      
                 else:
+                    #when pausing
                     self.message_display.show_message("Paused", 2)  # Show Paused
                     self.is_paused = True
+                    self.sound.channel1.pause()
+
+                #reverse gravity
+            elif event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+                self.reverse_gravity()
                 
             elif event.type == pg.MOUSEBUTTONDOWN:
                 self.mouse_down = True
@@ -284,6 +353,8 @@ class Game:
                     pg.time.set_timer(EXIT_APP, 5000)  # Quit game after 5 seconds
                 else:
                     self.message_display.show_message(f"Level {self.current_level} Start!", 2)
+
+    
                     
     def run(self):
         '''Run the main game loop'''
@@ -291,6 +362,8 @@ class Game:
             self.check_events()
             self.update()
             self.draw()
+
+    
 
 def main():
     game = Game()

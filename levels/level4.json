@@ -1,0 +1,43 @@
+{
+    "number_sugar_grains": 2000,
+    "statics": [
+        {
+            "x1": 512,
+            "y1": 350,
+            "x2": 512,
+            "y2": 800,
+            "color": "gray",
+            "line_width": 6,
+            "friction": 0.1,
+            "restitution": 0.5
+        }
+    ],
+    "buckets": [
+        {
+            "x": 300,
+            "y": 370,
+            "width": 40,
+            "height": 40,
+            "needed_sugar": 70
+        },
+        
+        {
+            "x": 700,
+            "y": 200,
+            "width": 40,
+            "height": 40,
+            "needed_sugar": 50
+        },
+        {
+            "x": 750,
+            "y": 400,
+            "width": 40,
+            "height": 40,
+            "needed_sugar": 50
+        }
+    ],
+    "spout_x": 950,
+    "spout_y": 750,
+    "time_to_complete_level": 120
+
+}
