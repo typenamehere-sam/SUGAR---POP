@@ -76,6 +76,7 @@ class Game:
         for item in self.buckets:
             item.delete() 
         for item in self.statics:
+        
             item.delete() 
         self.sugar_grains = []
         self.drawing_lines = []  # Clear the list
