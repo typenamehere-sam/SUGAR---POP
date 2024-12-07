@@ -31,35 +31,4 @@ class Sound:
             self.sounds [sound_name].play()
 
 
-             # def collect(self, grain):
-    #     ''''collect a sugar grain only when it falls into the bucket'''
-    #     if self.grain_in_bucket(grain):
-    #         self.count += 1
-    #         if self.count >= self.needed_sugar and not self.exploded:
-    #             self.explode()
-    #         return True
-    #     return False
-    
-    # def grain_in_bucket(self,grain):
-    #     '''''is grain inside the bucket area?'''
-    #     return grain.position[0] in range(self.position[0], self.position[0] + self.width) and \
-    #            grain.position[1] in range(self.position[1] + self.height)
-    
-    # def grains_left(self):
-    #     return self.needed_sugar - self.count
-    
-    # def explode (self):
-    #     '''handle bucket's explosion'''
-    #     self.exploded = True
-    #     #remove grains from this bucket
-    #     for grain in self.sugar_grains:
-    #         grain.delete()
-    
-
-
-     # y_offset = 50
-        # for bucket in self.buckets:
-        #     remaining_grains = bucket.grains_left()
-        #     bucket_text = self.font.render (f'{remaining_grains}', True, (255, 255, 255))
-        #     self.screen.blit(bucket_text, (WIDTH - 200, y_offset))
-        #     y_offset +=40
+         
